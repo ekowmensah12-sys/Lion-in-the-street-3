@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Lion">
+<meta name="theme-color" content="#B8860B">
+<link rel="apple-touch-icon" href="icon.png">
+<title>Lion</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --gold:#B8860B;--gold-light:#D4A520;--gold-pale:#FDF8EC;
+  --surface:#FFFFFF;--surface2:#FAFAF7;--surface3:#F4F1E8;
+  --border:#E8E2D0;--border2:#D0C080;
+  --text:#1C1A14;--text2:#5C5540;--text3:#9A9070;
+  --green:#2E7D52;--green-bg:#EDF7F1;
+  --red:#C0392B;--red-bg:#FDF0EE;
+  --amber:#9A6B00;--amber-bg:#FDF8EC;
+  --purple:#5B4DB5;--purple-bg:#F0EEFF;
+  --radius:10px;--radius-lg:16px;
+  --font-display:'Bebas Neue',sans-serif;
+  --font-body:'DM Sans',sans-serif;
+  --font-mono:'DM Mono',monospace;
+}
+html{font-size:16px;}
+body{font-family:var(--font-body);background:var(--surface2);color:var(--text);min-height:100vh;}
+.wrapper{max-width:1040px;margin:0 auto;padding:0 1.5rem 4rem;}
+
+/* PRIVACY */
+.lock-btn{background:var(--gold);color:#fff;border:1px solid var(--gold);border-radius:var(--radius);padding:6px 16px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px;}
+.lock-btn:hover{background:var(--gold-light);}
+.priv-val,.priv-input{transition:filter 0.2s;}
+body.locked .priv-val{filter:blur(7px);user-select:none;pointer-events:none;}
+body.locked .priv-input{filter:blur(7px);user-select:none;pointer-events:none;}
+body.locked .brow-inp{filter:blur(7px);user-select:none;pointer-events:none;}
+body.locked .bsec-total{filter:blur(7px);user-select:none;pointer-events:none;}
+.pin-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;align-items:center;justify-content:center;}
+.pin-modal.show{display:flex;}
+.pin-box{background:var(--surface);border-radius:var(--radius-lg);padding:2rem;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.18);min-width:280px;}
+.po-icon{font-size:32px;margin-bottom:8px;}
+.po-title{font-size:15px;font-weight:500;color:var(--text);margin-bottom:4px;}
+.po-sub{font-size:12px;color:var(--text3);margin-bottom:16px;}
+.po-pin-row{display:flex;gap:8px;justify-content:center;}
+.po-pin{background:var(--surface3);border:1px solid var(--border2);border-radius:var(--radius);padding:0 12px;height:44px;font-family:var(--font-mono);font-size:22px;width:130px;text-align:center;outline:none;letter-spacing:0.3em;color:var(--text);}
+.po-pin:focus{border-color:var(--gold);}
+.po-btn{background:var(--gold);color:#fff;border:none;border-radius:var(--radius);height:44px;padding:0 18px;font-family:var(--font-body);font-size:13px;font-weight:500;cursor:pointer;}
+.po-btn:hover{background:var(--gold-light);}
+.po-error{font-size:12px;color:var(--red);margin-top:8px;min-height:16px;}
+
+/* HEADER */
+.header{display:flex;align-items:center;justify-content:space-between;padding:1.5rem 0 0;flex-wrap:wrap;gap:10px;}
+.logo{font-family:var(--font-display);font-size:32px;letter-spacing:0.04em;color:var(--gold);line-height:1;}
+.header-date{font-family:var(--font-mono);font-size:12px;color:var(--text3);}
+
+/* TABS */
+.tab-nav{display:flex;margin:1rem 0 1.75rem;border-bottom:1px solid var(--border2);}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;padding:0.6rem 1.25rem;font-family:var(--font-body);font-size:14px;font-weight:500;color:var(--text3);cursor:pointer;margin-bottom:-1px;transition:color 0.15s,border-color 0.15s;}
+.tab-btn.active{color:var(--gold);border-bottom-color:var(--gold);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* SHARED */
+.sec-label{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);font-weight:500;margin-bottom:1rem;display:flex;align-items:center;gap:8px;}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--border2);}
+input[type=number]{background:var(--surface);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:14px;padding:0 10px;height:38px;border-radius:0 var(--radius) var(--radius) 0;outline:none;transition:border-color 0.2s;width:110px;-moz-appearance:textfield;}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
+input[type=number]:focus{border-color:var(--gold);}
+.pfx{background:var(--surface3);border:1px solid var(--border2);border-right:none;border-radius:var(--radius) 0 0 var(--radius);padding:0 10px;height:38px;display:flex;align-items:center;font-family:var(--font-mono);font-size:14px;color:var(--gold);font-weight:500;}
+.prefix-input{display:flex;align-items:center;}
+.igroup{display:flex;flex-direction:column;gap:4px;}
+.igroup label{font-size:11px;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;}
+.divider{height:1px;background:var(--border);margin:1rem 0;}
+
+/* PAYDAY HERO */
+.payday-hero{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:2rem 1.5rem;margin-bottom:1.25rem;text-align:center;}
+.payday-inner{max-width:520px;margin:0 auto;}
+.payday-next-label{font-size:12px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px;}
+.payday-date-str{font-size:16px;font-weight:500;color:var(--text2);margin-bottom:1.75rem;}
+.timer-ring-wrap{position:relative;width:210px;height:210px;margin:0 auto 1.75rem;}
+.timer-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.timer-days{font-family:var(--font-display);font-size:72px;color:var(--gold);line-height:1;letter-spacing:0.02em;}
+.timer-label{font-size:12px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-top:2px;}
+.payday-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.5rem;}
+.pstat{background:var(--surface3);border-radius:var(--radius);padding:1rem;text-align:center;}
+.pstat-label{font-size:11px;color:var(--text3);margin-bottom:5px;}
+.pstat-value{font-family:var(--font-display);font-size:30px;letter-spacing:0.02em;color:var(--text);}
+.pstat-value.green{color:var(--green);}
+.pstat-value.amber{color:var(--amber);}
+.pstat-sub{font-size:11px;color:var(--text3);margin-top:3px;}
+.prog-wrap{background:var(--border);border-radius:4px;height:5px;overflow:hidden;margin-top:8px;}
+.prog-fill{height:100%;border-radius:4px;transition:width 0.5s ease,background 0.3s;}
+.disp-input-row{display:flex;align-items:flex-end;justify-content:center;gap:12px;padding-top:1.25rem;border-top:1px solid var(--border);flex-wrap:wrap;}
+
+/* WHAT IF */
+.whatif-card{background:var(--gold-pale);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;margin-bottom:1.25rem;}
+.whatif-title{font-size:14px;font-weight:500;color:var(--amber);margin-bottom:0.75rem;}
+.whatif-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.whatif-row span{font-size:14px;color:var(--text2);}
+.whatif-result{margin-top:0.85rem;padding:0.85rem 1rem;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);display:flex;justify-content:space-around;align-items:center;flex-wrap:wrap;gap:12px;}
+.wi-item{text-align:center;}
+.wi-label{font-size:11px;color:var(--text3);margin-bottom:3px;}
+.wi-val{font-family:var(--font-display);font-size:22px;color:var(--text);}
+.wi-val.green{color:var(--green);}
+.wi-val.red{color:var(--red);}
+.wi-val.amber{color:var(--amber);}
+
+/* POTS */
+.pots-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.25rem;}
+@media(max-width:600px){.pots-grid,.budget-grid{grid-template-columns:1fr;}}
+.pot{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.1rem;}
+.pot-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.pot-tag{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;font-weight:500;padding:2px 8px;border-radius:5px;}
+.tag-sav{background:var(--green-bg);color:var(--green);}
+.tag-sh{background:var(--purple-bg);color:var(--purple);}
+.tag-gen{background:var(--amber-bg);color:var(--amber);border:1px solid var(--border2);}
+.pot-label{font-size:11px;color:var(--text3);margin-bottom:3px;}
+.pot-value{font-family:var(--font-display);font-size:26px;letter-spacing:0.02em;margin-bottom:7px;}
+.pot.savings .pot-value{color:var(--green);}
+.pot.shares .pot-value{color:var(--purple);}
+.pot.gen .pot-value{color:var(--gold);}
+.pot-note{font-size:10px;color:var(--text3);font-style:italic;margin-top:4px;}
+.pot-input-wrap{display:flex;align-items:center;}
+.pot-pfx{background:var(--surface3);border:1px solid var(--border);border-right:none;border-radius:6px 0 0 6px;padding:0 8px;height:30px;display:flex;align-items:center;font-family:var(--font-mono);font-size:12px;color:var(--gold);}
+.pot-input-wrap input{height:30px;font-size:12px;width:100%;border-radius:0 6px 6px 0;}
+
+/* BUDGET */
+.budget-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.25rem;}
+.bsec{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+.bsec-head{display:flex;align-items:center;justify-content:space-between;padding:0.7rem 1rem;border-bottom:1px solid var(--border);background:var(--surface3);}
+.bsec-title{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text2);font-weight:500;}
+.bsec-total{font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--text);}
+.brow{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;padding:6px 1rem;border-bottom:1px solid rgba(0,0,0,0.04);}
+.brow:last-child{border-bottom:none;}
+.brow:hover{background:var(--surface3);}
+.brow-name{font-size:13px;color:var(--text2);}
+.brow-inp{display:flex;align-items:center;}
+.brow-pfx{background:var(--surface3);border:1px solid var(--border);border-right:none;border-radius:5px 0 0 5px;padding:0 6px;height:26px;font-family:var(--font-mono);font-size:11px;color:var(--gold);display:flex;align-items:center;}
+.brow-inp input{height:26px;font-size:12px;width:76px;border-radius:0 5px 5px 0;padding:0 6px;text-align:right;}
+
+/* ADD ROW */
+.add-row-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1.25rem;}
+.add-row-head{display:flex;align-items:center;padding:0.7rem 1rem;border-bottom:1px solid var(--border);background:var(--surface3);}
+.add-row-title{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text2);font-weight:500;}
+.add-form{display:flex;align-items:center;gap:8px;padding:10px 1rem;flex-wrap:wrap;}
+.add-form input[type=text]{background:var(--surface);border:1px solid var(--border2);color:var(--text);font-family:var(--font-body);font-size:13px;padding:0 10px;height:30px;border-radius:var(--radius);outline:none;width:160px;}
+.add-form input[type=text]:focus{border-color:var(--gold);}
+select.add-select{background:var(--surface);border:1px solid var(--border2);color:var(--text2);font-family:var(--font-body);font-size:12px;padding:0 8px;height:30px;border-radius:var(--radius);outline:none;cursor:pointer;}
+.add-btn{background:var(--gold);color:#fff;border:none;border-radius:var(--radius);height:30px;padding:0 14px;font-family:var(--font-body);font-size:12px;font-weight:500;cursor:pointer;}
+.add-btn:hover{background:var(--gold-light);}
+
+/* STACKED BAR */
+.monthbar-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1.25rem;}
+.monthbar-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
+.monthbar-heading{font-size:13px;color:var(--text2);}
+.monthbar-pct{font-family:var(--font-display);font-size:24px;color:var(--gold);}
+.stacked{display:flex;height:24px;border-radius:6px;overflow:hidden;gap:1px;background:var(--border);}
+.seg{height:100%;transition:flex 0.4s ease;}
+.seg-labels{display:flex;justify-content:space-between;margin-top:6px;}
+.seg-lbl{font-size:11px;color:var(--text3);font-family:var(--font-mono);}
+
+/* SUMMARY */
+.summary-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1.25rem;}
+.sumrow{display:flex;justify-content:space-around;flex-wrap:wrap;gap:12px;margin-bottom:1.25rem;}
+.sitem{text-align:center;}
+.sitem-label{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin-bottom:3px;}
+.sitem-val{font-family:var(--font-display);font-size:22px;}
+.sitem-val.gold{color:var(--gold);}
+.sitem-val.red{color:var(--red);}
+.sitem-val.green{color:var(--green);}
+.sitem-val.amber{color:var(--amber);}
+.sitem-val.purple{color:var(--purple);}
+.compare-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(0,0,0,0.05);}
+.compare-row:last-child{border-bottom:none;}
+.compare-label{font-size:13px;color:var(--text2);}
+.compare-vals{display:flex;gap:14px;font-family:var(--font-mono);font-size:12px;}
+.cv-dim{color:var(--text3);}
+.cv-strong{color:var(--text);font-weight:500;}
+.chart-wrap{position:relative;width:100%;height:200px;margin-top:1rem;}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;justify-content:center;}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text3);}
+.legend-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+
+/* BODY TRACKER */
+.body-day-cell{background:var(--surface);padding:0.6rem 0.75rem;display:flex;flex-direction:column;gap:2px;}
+.body-day-num{font-size:10px;color:var(--text3);font-weight:500;}
+.body-day-val{font-family:var(--font-display);font-size:18px;color:var(--text);}
+.body-day-val.logged{color:var(--green);}
+.body-day-stone{font-size:10px;color:var(--text3);font-family:var(--font-mono);}
+.body-day-cell.today-cell{background:var(--gold-pale);}
+.submit-shop-btn{background:var(--green);color:#fff;border:none;border-radius:var(--radius);padding:0 16px;height:32px;font-family:var(--font-body);font-size:13px;font-weight:500;cursor:pointer;transition:background 0.15s;width:100%;}
+.submit-shop-btn:hover{background:#236640;}
+.submit-shop-btn:disabled{background:var(--text3);cursor:default;}
+.submit-confirm{font-size:11px;color:var(--green);margin-top:4px;text-align:right;min-height:14px;}
+
+.footer{text-align:center;padding:1.5rem 0 0;font-size:11px;color:var(--text3);border-top:1px solid var(--border);letter-spacing:0.05em;}
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header class="header">
+    <div><div class="logo">🦁 Lion in the Street</div></div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="header-date" id="header-date">—</div>
+      <button class="lock-btn" id="lock-btn">🔓 Unlock</button>
+    </div>
+  </header>
+
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="budget">💰 Budget</button>
+    <button class="tab-btn" data-tab="body">💪 Body</button>
+  </nav>
+
+  <!-- TAB 1: BUDGET -->
+  <div id="tab-budget" class="tab-panel active">
+
+    <div class="payday-hero">
+      <div class="payday-inner">
+        <div class="sec-label">Payday tracker</div>
+        <div class="payday-next-label">Next payday</div>
+        <div class="payday-date-str" id="payday-date-str">—</div>
+        <div class="timer-ring-wrap">
+          <svg viewBox="0 0 210 210" width="210" height="210" style="display:block;">
+            <circle cx="105" cy="105" r="92" fill="none" stroke="#E8E2D0" stroke-width="10"/>
+            <circle id="ring-circle" cx="105" cy="105" r="92" fill="none" stroke="#B8860B" stroke-width="10"
+              stroke-linecap="round" stroke-dasharray="578" stroke-dashoffset="578"
+              transform="rotate(-90 105 105)" style="transition:stroke-dashoffset 1s ease;"/>
+          </svg>
+          <div class="timer-center">
+            <div class="timer-days" id="timer-days">—</div>
+            <div class="timer-label">days left</div>
+          </div>
+        </div>
+        <div class="payday-stats">
+          <div class="pstat">
+            <div class="pstat-label">Balance now</div>
+            <div class="pstat-value green priv-val" id="balance-display">£815</div>
+            <div class="pstat-sub">your actual pocket money</div>
+          </div>
+          <div class="pstat">
+            <div class="pstat-label">Daily spend limit</div>
+            <div class="pstat-value amber priv-val" id="per-day">£—</div>
+            <div class="pstat-sub">balance ÷ days to payday</div>
+            <div class="prog-wrap"><div class="prog-fill" id="prog-bar" style="width:0%"></div></div>
+          </div>
+        </div>
+        <div class="disp-input-row">
+          <div class="igroup">
+            <label>Current balance</label>
+            <div class="prefix-input priv-input"><span class="pfx">£</span><input type="number" id="actual-input" value="815" min="0" step="1"></div>
+          </div>
+          <div class="igroup">
+            <label>Monthly income</label>
+            <div class="prefix-input priv-input"><span class="pfx">£</span><input type="number" id="income-input" value="5230" min="0" step="1"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="whatif-card">
+      <div class="whatif-title">🛒 What if I buy this?</div>
+      <div class="whatif-row">
+        <span>If I spend</span>
+        <div class="prefix-input"><span class="pfx">£</span><input type="number" id="wi-amount" value="0" min="0" step="1" style="width:90px;"></div>
+        <span>— what happens to my daily limit?</span>
+      </div>
+      <div class="whatif-result">
+        <div class="wi-item"><div class="wi-label">Balance after</div><div class="wi-val priv-val" id="wi-after-bal">£815</div></div>
+        <div class="wi-item"><div class="wi-label">New daily limit</div><div class="wi-val amber priv-val" id="wi-new-daily">—</div></div>
+        <div class="wi-item"><div class="wi-label">Change per day</div><div class="wi-val priv-val" id="wi-diff">—</div></div>
+      </div>
+    </div>
+
+    <div class="sec-label" style="margin-bottom:0.75rem;">Your pots</div>
+    <div class="pots-grid">
+      <div class="pot savings">
+        <div class="pot-top"><span class="pot-label">Cash savings</span><span class="pot-tag tag-sav">Savings</span></div>
+        <div class="pot-value priv-val" id="sav-display">£2,000</div>
+        <div class="pot-input-wrap priv-input"><span class="pot-pfx">£</span><input type="number" id="sav-input" value="2000" min="0" step="1"></div>
+      </div>
+      <div class="pot shares">
+        <div class="pot-top"><span class="pot-label">Investment portfolio</span><span class="pot-tag tag-sh">Shares</span></div>
+        <div class="pot-value priv-val" id="sh-display">£1,200</div>
+        <div class="pot-input-wrap priv-input"><span class="pot-pfx">£</span><input type="number" id="sh-input" value="1200" min="0" step="1"></div>
+      </div>
+      <div class="pot gen">
+        <div class="pot-top"><span class="pot-label">Genesis 21:34</span><span class="pot-tag tag-gen">Gen 21:34</span></div>
+        <div class="pot-value priv-val" id="gen-display">£4,700</div>
+        <div class="pot-input-wrap priv-input"><span class="pot-pfx">£</span><input type="number" id="gen-input" value="4700" min="0" step="1"></div>
+        <div class="pot-note">Touch-free until 2033</div>
+      </div>
+    </div>
+
+    <div class="sec-label" style="margin-bottom:0.75rem;">Monthly budget</div>
+    <div class="budget-grid">
+      <div class="bsec">
+        <div class="bsec-head"><span class="bsec-title">🔒 Fixed costs</span><span class="bsec-total" id="fixed-total">—</span></div>
+        <div id="fixed-rows"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="bsec">
+          <div class="bsec-head"><span class="bsec-title">🌱 Savings &amp; commitments</span><span class="bsec-total" id="save-total">—</span></div>
+          <div id="save-rows" class="priv-val"></div>
+        </div>
+        <div class="bsec">
+          <div class="bsec-head"><span class="bsec-title">🔄 Variable costs</span><span class="bsec-total" id="var-total">—</span></div>
+          <div id="var-rows"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="add-row-section">
+      <div class="add-row-head"><span class="add-row-title">➕ Add a cost or commitment</span></div>
+      <div class="add-form">
+        <input type="text" id="add-name" placeholder="Description e.g. Netflix" maxlength="40">
+        <div class="brow-inp"><span class="brow-pfx">£</span><input type="number" id="add-amount" value="" min="0" step="1" style="width:80px;height:30px;font-size:12px;border-radius:0 5px 5px 0;"></div>
+        <select class="add-select" id="add-category">
+          <option value="fixed">Fixed cost</option>
+          <option value="save">Savings &amp; commitments</option>
+          <option value="var">Variable cost</option>
+        </select>
+        <button class="add-btn" id="add-btn">Add</button>
+      </div>
+      <div id="custom-rows"></div>
+    </div>
+
+    <div class="monthbar-card">
+      <div class="monthbar-top">
+        <div class="monthbar-heading">% of £<span id="income-lbl" class="priv-val">5,230</span> monthly income allocated</div>
+        <div class="monthbar-pct priv-val" id="alloc-pct">—%</div>
+      </div>
+      <div class="stacked priv-val" id="stacked-bar"></div>
+      <div class="seg-labels">
+        <span class="seg-lbl priv-val" id="lbl-fixed">Fixed</span>
+        <span class="seg-lbl priv-val" id="lbl-save">Savings</span>
+        <span class="seg-lbl priv-val" id="lbl-var">Variable</span>
+        <span class="seg-lbl priv-val" id="lbl-free">Free</span>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="sec-label">Monthly summary</div>
+      <div class="sumrow">
+        <div class="sitem"><div class="sitem-label">Income</div><div class="sitem-val gold priv-val" id="s-income">—</div></div>
+        <div class="sitem"><div class="sitem-label">Fixed out</div><div class="sitem-val red priv-val" id="s-fixed">—</div></div>
+        <div class="sitem"><div class="sitem-label">Savings out</div><div class="sitem-val green priv-val" id="s-save">—</div></div>
+        <div class="sitem"><div class="sitem-label">Variable out</div><div class="sitem-val amber priv-val" id="s-var">—</div></div>
+        <div class="sitem"><div class="sitem-label">Actual balance</div><div class="sitem-val purple priv-val" id="s-actual">£815</div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="compare-row priv-val">
+        <span class="compare-label">Calculated free cash vs actual balance</span>
+        <div class="compare-vals">
+          <span class="cv-dim">Calculated: <span id="cmp-calc">—</span></span>
+          <span class="cv-strong">Actual: <span id="cmp-actual">£815</span></span>
+        </div>
+      </div>
+      <div class="compare-row priv-val">
+        <span class="compare-label">Difference (actual − calculated)</span>
+        <span class="cv-strong" id="cmp-diff">—</span>
+      </div>
+      <div class="chart-wrap priv-val">
+        <canvas id="budgetChart" role="img" aria-label="Budget breakdown chart"></canvas>
+      </div>
+      <div class="legend priv-val" id="chart-legend"></div>
+    </div>
+
+  </div>
+
+  <!-- TAB 2: BODY -->
+  <div id="tab-body" class="tab-panel">
+    <div class="payday-hero">
+      <div class="payday-inner">
+        <div class="sec-label">Weight tracker</div>
+        <div class="payday-stats" style="margin-bottom:1.25rem;">
+          <div class="pstat">
+            <div class="pstat-label">Current weight</div>
+            <div class="pstat-value green" id="body-current-st">17 st 2</div>
+            <div class="pstat-sub" id="body-current-kg">109.1 kg</div>
+          </div>
+          <div class="pstat">
+            <div class="pstat-label">Goal weight</div>
+            <div class="pstat-value amber">16 st 12</div>
+            <div class="pstat-sub">107.0 kg · end of May</div>
+          </div>
+        </div>
+        <div class="timer-ring-wrap">
+          <svg viewBox="0 0 210 210" width="210" height="210" style="display:block;">
+            <circle cx="105" cy="105" r="92" fill="none" stroke="#E8E2D0" stroke-width="10"/>
+            <circle id="body-ring" cx="105" cy="105" r="92" fill="none" stroke="#2E7D52" stroke-width="10"
+              stroke-linecap="round" stroke-dasharray="578" stroke-dashoffset="578"
+              transform="rotate(-90 105 105)" style="transition:stroke-dashoffset 1s ease;"/>
+          </svg>
+          <div class="timer-center">
+            <div class="timer-days" id="body-ring-lbl" style="font-size:42px;color:var(--green);">0%</div>
+            <div class="timer-label">to goal</div>
+          </div>
+        </div>
+        <div class="payday-stats" style="margin-bottom:1.25rem;">
+          <div class="pstat">
+            <div class="pstat-label">To lose</div>
+            <div class="pstat-value" id="body-to-lose" style="font-size:24px;">—</div>
+            <div class="pstat-sub">remaining</div>
+          </div>
+          <div class="pstat">
+            <div class="pstat-label">Lost so far</div>
+            <div class="pstat-value green" id="body-lost" style="font-size:24px;">0 kg</div>
+            <div class="pstat-sub">keep going 🔥</div>
+          </div>
+        </div>
+        <div style="background:var(--amber-bg);border:1px solid var(--border2);border-radius:var(--radius);padding:0.75rem 1rem;margin-bottom:1.25rem;font-size:12px;color:var(--amber);text-align:center;">
+          ⚡ 6 lbs in 2.5 weeks — challenging but achievable with clean eating + 4x football per week. You've got this.
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:1.25rem;">
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.75rem;text-align:center;">Log today's weight</div>
+          <div style="display:flex;justify-content:center;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+            <div class="igroup" style="align-items:center;">
+              <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;">kg</label>
+              <div style="display:flex;align-items:center;margin-top:4px;">
+                <span class="pfx" style="height:38px;">kg</span>
+                <input type="number" id="body-kg-input" placeholder="e.g. 108.5" min="50" max="200" step="0.1" style="width:120px;">
+              </div>
+            </div>
+            <button class="add-btn" id="body-log-btn" style="height:38px;">Log weight</button>
+          </div>
+          <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:6px;">Input in kg — converts to stone automatically</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-label" style="margin-bottom:0.75rem;">Daily log — <span id="body-month-label">May 2026</span></div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1.25rem;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:1px;background:var(--border);" id="body-day-grid"></div>
+    </div>
+  </div>
+
+  <!-- PIN MODAL -->
+  <div class="pin-modal" id="pin-modal">
+    <div class="pin-box">
+      <div class="po-icon">🔒</div>
+      <div class="po-title">Private</div>
+      <div class="po-sub">Enter PIN to unlock</div>
+      <div class="po-pin-row">
+        <input type="password" class="po-pin" id="po-pin-input" maxlength="6" placeholder="••••" inputmode="numeric">
+        <button class="po-btn" id="po-unlock-btn">Unlock</button>
+      </div>
+      <div class="po-error" id="po-error"></div>
+    </div>
+  </div>
+
+  <footer class="footer">Lion in the Street · All values in £ · Euros converted at 0.855 · Updates live as you type</footer>
+</div>
+
+<script>
+const EUR=0.855;
+const fmt=n=>'£'+Math.round(n).toLocaleString('en-GB');
+const fmtRaw=n=>Math.round(n).toLocaleString('en-GB');
+let submittedGroceryGbp=0;
+
+/* TAB SWITCHING */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* BUDGET DATA */
+const fixedItems=[
+  {name:'Rent',val:1800},
+  {name:'Tithe',val:523},
+  {name:'Gen 21:14',val:333},
+  {name:'Internet',val:Math.round(54*EUR)},
+  {name:'Gas',val:Math.round(47*EUR)},
+  {name:'Water',val:Math.round(20*EUR)},
+  {name:'Phone',val:Math.round(15*EUR)},
+];
+const saveItems=[
+  {name:'Genesis 21:34 (20%/mo)',val:980},
+  {name:'Shares top-up',val:100},
+];
+const varItems=[
+  {name:'Food & drink',val:0},
+  {name:'Petrol',val:0},
+];
+
+function renderRows(id,items){
+  items.sort((a,b)=>b.val-a.val);
+  const el=document.getElementById(id);
+  el.innerHTML='';
+  items.forEach((item,i)=>{
+    const r=document.createElement('div');
+    r.className='brow';
+    r.innerHTML=`<span class="brow-name">${item.name}</span>
+      <div class="brow-inp"><span class="brow-pfx">£</span>
+      <input type="number" data-group="${id}" data-idx="${i}" value="${item.val}" min="0" step="1"></div>`;
+    el.appendChild(r);
+  });
+}
+
+function rerenderSorted(){
+  ['fixed-rows','save-rows','var-rows'].forEach(id=>{
+    const items=id==='fixed-rows'?fixedItems:id==='save-rows'?saveItems:varItems;
+    document.querySelectorAll(`[data-group="${id}"]`).forEach((inp,i)=>{items[i].val=parseFloat(inp.value)||0;});
+    renderRows(id,items);
+  });
+}
+
+function getNextPayday(){
+  const now=new Date();
+  const y=now.getFullYear(),m=now.getMonth();
+  function lastFridayOf(yr,mo){
+    const last=new Date(yr,mo+1,0);
+    const dow=last.getDay();
+    const diff=dow>=5?(dow-5):(dow+2);
+    last.setDate(last.getDate()-diff);
+    return last;
+  }
+  let candidate=lastFridayOf(y,m);
+  const todayMidnight=new Date(y,m,now.getDate());
+  if(candidate<=todayMidnight){
+    candidate=m===11?lastFridayOf(y+1,0):lastFridayOf(y,m+1);
+  }
+  return candidate;
+}
+
+let budgetChart=null;
+
+function recalc(){
+  const income=parseFloat(document.getElementById('income-input').value)||0;
+  const actual=parseFloat(document.getElementById('actual-input').value)||0;
+  document.getElementById('income-lbl').textContent=fmtRaw(income);
+  let ft=0,st=0,vt=0;
+  document.querySelectorAll('[data-group="fixed-rows"]').forEach((inp,i)=>{fixedItems[i].val=parseFloat(inp.value)||0;ft+=fixedItems[i].val;});
+  document.querySelectorAll('[data-group="save-rows"]').forEach((inp,i)=>{saveItems[i].val=parseFloat(inp.value)||0;st+=saveItems[i].val;});
+  document.querySelectorAll('[data-group="var-rows"]').forEach((inp,i)=>{varItems[i].val=parseFloat(inp.value)||0;vt+=varItems[i].val;});
+  document.querySelectorAll('[data-group="custom-fixed"]').forEach(inp=>{ft+=parseFloat(inp.value)||0;});
+  document.querySelectorAll('[data-group="custom-save"]').forEach(inp=>{st+=parseFloat(inp.value)||0;});
+  document.querySelectorAll('[data-group="custom-var"]').forEach(inp=>{vt+=parseFloat(inp.value)||0;});
+  vt+=submittedGroceryGbp;
+  document.getElementById('fixed-total').textContent=fmt(ft);
+  document.getElementById('save-total').textContent=fmt(st);
+  document.getElementById('var-total').textContent=fmt(vt);
+  const calc=income-ft-st-vt;
+  document.getElementById('s-income').textContent=fmt(income);
+  document.getElementById('s-fixed').textContent=fmt(ft);
+  document.getElementById('s-save').textContent=fmt(st);
+  document.getElementById('s-var').textContent=fmt(vt);
+  document.getElementById('s-actual').textContent=fmt(actual);
+  document.getElementById('cmp-calc').textContent=fmt(calc);
+  document.getElementById('cmp-actual').textContent=fmt(actual);
+  const diff=actual-calc;
+  const diffEl=document.getElementById('cmp-diff');
+  diffEl.textContent=(diff>=0?'+':'')+fmt(diff);
+  diffEl.style.color=diff>=0?'var(--green)':'var(--red)';
+  const total=ft+st+vt;
+  const pct=income>0?Math.round(total/income*100):0;
+  document.getElementById('alloc-pct').textContent=pct+'%';
+  const fp=income>0?ft/income*100:0,sp=income>0?st/income*100:0,vp=income>0?vt/income*100:0,rp=Math.max(0,100-fp-sp-vp);
+  document.getElementById('stacked-bar').innerHTML=
+    `<div class="seg" style="flex:${fp};background:#C0392B;"></div>`+
+    `<div class="seg" style="flex:${sp};background:#2E7D52;"></div>`+
+    `<div class="seg" style="flex:${vp};background:#9A6B00;"></div>`+
+    `<div class="seg" style="flex:${rp};background:#E8E2D0;"></div>`;
+  document.getElementById('lbl-fixed').textContent='Fixed '+Math.round(fp)+'%';
+  document.getElementById('lbl-save').textContent='Savings '+Math.round(sp)+'%';
+  document.getElementById('lbl-var').textContent='Variable '+Math.round(vp)+'%';
+  document.getElementById('lbl-free').textContent='Free '+Math.round(rp)+'%';
+  updatePayday(actual,income);
+  updateWhatIf(actual);
+  updateChart(ft,st,vt);
+}
+
+function updatePayday(actual,income){
+  const payday=getNextPayday();
+  const now=new Date();
+  const todayMidnight=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const days=Math.round((payday-todayMidnight)/86400000);
+  document.getElementById('timer-days').textContent=days;
+  document.getElementById('payday-date-str').textContent=payday.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const daysInMonth=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+  const elapsed=now.getDate();
+  const circumference=2*Math.PI*92;
+  const progress=1-(elapsed/daysInMonth);
+  document.getElementById('ring-circle').setAttribute('stroke-dasharray',circumference.toFixed(1));
+  document.getElementById('ring-circle').setAttribute('stroke-dashoffset',(circumference*(1-progress)).toFixed(1));
+  const perDay=days>0?actual/days:actual;
+  document.getElementById('per-day').textContent='£'+perDay.toFixed(2);
+  document.getElementById('balance-display').textContent=fmt(actual);
+  const usedPct=income>0?Math.min(100,Math.round(((income-actual)/income)*100)):0;
+  const bar=document.getElementById('prog-bar');
+  bar.style.width=usedPct+'%';
+  bar.style.background=usedPct>80?'#C0392B':usedPct>55?'#9A6B00':'#2E7D52';
+}
+
+function updateWhatIf(actual){
+  const spend=parseFloat(document.getElementById('wi-amount').value)||0;
+  const payday=getNextPayday();
+  const now=new Date();
+  const days=Math.round((payday-new Date(now.getFullYear(),now.getMonth(),now.getDate()))/86400000);
+  const afterBal=actual-spend;
+  const newDaily=days>0?afterBal/days:afterBal;
+  const currentDaily=days>0?actual/days:actual;
+  const diff=newDaily-currentDaily;
+  const afterEl=document.getElementById('wi-after-bal');
+  afterEl.textContent=fmt(afterBal);afterEl.className='wi-val priv-val '+(afterBal>=0?'green':'red');
+  document.getElementById('wi-new-daily').textContent='£'+Math.max(0,newDaily).toFixed(2);
+  const diffEl=document.getElementById('wi-diff');
+  diffEl.textContent=(diff>=0?'+':'')+'£'+diff.toFixed(2)+'/day';
+  diffEl.className='wi-val priv-val '+(diff>=0?'green':'red');
+}
+
+function updatePots(){
+  [['sav','sav-display'],['sh','sh-display'],['gen','gen-display']].forEach(([id,disp])=>{
+    document.getElementById(disp).textContent=fmt(parseFloat(document.getElementById(id+'-input').value)||0);
+  });
+}
+
+function updateChart(ft,st,vt){
+  const data=[ft,st,vt];
+  const labels=['Fixed costs','Savings','Variable'];
+  const colors=['#C0392B','#2E7D52','#9A6B00'];
+  if(!budgetChart){
+    const ctx=document.getElementById('budgetChart').getContext('2d');
+    budgetChart=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:0,hoverOffset:8}]},options:{responsive:true,maintainAspectRatio:false,cutout:'64%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmt(c.parsed)}}}}});
+  } else {
+    budgetChart.data.datasets[0].data=data;budgetChart.update('none');
+  }
+  document.getElementById('chart-legend').innerHTML=labels.map((l,i)=>`<span class="legend-item"><span class="legend-dot" style="background:${colors[i]}"></span>${l}: ${fmt(data[i])}</span>`).join('');
+}
+
+/* BODY TRACKER */
+const CURRENT_KG=109.1,GOAL_KG=107.0,START_KG=109.1;
+function kgToStone(kg){const lbs=kg*2.20462;return`${Math.floor(lbs/14)} st ${Math.round(lbs%14)} lb`;}
+const bodyLogs={};
+function updateBodyHero(kg){
+  document.getElementById('body-current-st').textContent=kgToStone(kg);
+  document.getElementById('body-current-kg').textContent=kg.toFixed(1)+' kg';
+  const lost=Math.max(0,START_KG-kg);
+  document.getElementById('body-lost').textContent=lost.toFixed(1)+' kg';
+  document.getElementById('body-to-lose').textContent=Math.max(0,kg-GOAL_KG).toFixed(1)+' kg';
+  const pct=Math.min(100,Math.max(0,Math.round((START_KG-kg)/(START_KG-GOAL_KG)*100)));
+  document.getElementById('body-ring-lbl').textContent=pct+'%';
+  const circ=2*Math.PI*92;
+  document.getElementById('body-ring').setAttribute('stroke-dasharray',circ.toFixed(1));
+  document.getElementById('body-ring').setAttribute('stroke-dashoffset',(circ*(1-pct/100)).toFixed(1));
+}
+function renderBodyGrid(){
+  const now=new Date();
+  const y=now.getFullYear(),m=now.getMonth();
+  const days=new Date(y,m+1,0).getDate();
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('body-month-label').textContent=months[m]+' '+y;
+  const grid=document.getElementById('body-day-grid');
+  grid.innerHTML='';
+  for(let d=1;d<=days;d++){
+    const key=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const kg=bodyLogs[key];
+    const isToday=d===now.getDate();
+    const cell=document.createElement('div');
+    cell.className='body-day-cell'+(isToday?' today-cell':'');
+    cell.innerHTML=`<span class="body-day-num">${d} ${months[m].slice(0,3)}</span>
+      <span class="body-day-val ${kg?'logged':''}">${kg?kg.toFixed(1)+' kg':'—'}</span>
+      <span class="body-day-stone">${kg?kgToStone(kg):''}</span>`;
+    grid.appendChild(cell);
+  }
+}
+document.getElementById('body-log-btn').addEventListener('click',()=>{
+  const kg=parseFloat(document.getElementById('body-kg-input').value);
+  if(!kg||kg<50||kg>200)return;
+  const now=new Date();
+  const key=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  bodyLogs[key]=kg;
+  document.getElementById('body-kg-input').value='';
+  updateBodyHero(kg);
+  renderBodyGrid();
+});
+
+/* PRIVACY */
+const CORRECT_PIN='0160';
+let isLocked=true;
+document.body.classList.add('locked');
+function lockPrivate(){
+  isLocked=true;document.body.classList.add('locked');
+  document.getElementById('lock-btn').textContent='🔓 Unlock';
+}
+function unlockPrivate(){
+  isLocked=false;document.body.classList.remove('locked');
+  document.getElementById('pin-modal').classList.remove('show');
+  document.getElementById('lock-btn').textContent='🔒 Lock';
+  document.getElementById('po-error').textContent='';
+}
+document.getElementById('lock-btn').addEventListener('click',()=>{
+  if(isLocked){document.getElementById('pin-modal').classList.add('show');setTimeout(()=>document.getElementById('po-pin-input').focus(),100);}
+  else lockPrivate();
+});
+document.getElementById('po-unlock-btn').addEventListener('click',()=>{
+  const pin=document.getElementById('po-pin-input').value;
+  if(pin===CORRECT_PIN){document.getElementById('po-pin-input').value='';unlockPrivate();}
+  else{document.getElementById('po-error').textContent='Incorrect PIN';document.getElementById('po-pin-input').value='';document.getElementById('po-pin-input').focus();}
+});
+document.getElementById('po-pin-input').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('po-unlock-btn').click();});
+document.getElementById('pin-modal').addEventListener('click',e=>{
+  if(e.target===document.getElementById('pin-modal')){document.getElementById('pin-modal').classList.remove('show');document.getElementById('po-pin-input').value='';document.getElementById('po-error').textContent='';}
+});
+
+/* ADD CUSTOM ROW */
+let customCount=0;
+document.getElementById('add-btn').addEventListener('click',()=>{
+  const name=document.getElementById('add-name').value.trim();
+  const amount=parseFloat(document.getElementById('add-amount').value)||0;
+  const cat=document.getElementById('add-category').value;
+  if(!name)return;
+  const groupMap={fixed:'custom-fixed',save:'custom-save',var:'custom-var'};
+  const labelMap={fixed:'fixed',save:'savings',var:'variable'};
+  const colorMap={fixed:'var(--red-bg)',save:'var(--green-bg)',var:'var(--amber-bg)'};
+  const id='custom-'+(++customCount);
+  const row=document.createElement('div');
+  row.className='brow';row.id='row-'+id;row.style.background=colorMap[cat];
+  row.innerHTML=`<span class="brow-name">${name} <span style="font-size:10px;color:var(--text3);font-style:italic;">(${labelMap[cat]})</span></span>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <div class="brow-inp"><span class="brow-pfx">£</span>
+      <input type="number" data-group="${groupMap[cat]}" value="${amount}" min="0" step="1" style="height:26px;font-size:12px;width:76px;border-radius:0 5px 5px 0;padding:0 6px;text-align:right;"></div>
+      <button onclick="document.getElementById('row-${id}').remove();recalc();" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:18px;line-height:1;padding:0 4px;">×</button>
+    </div>`;
+  document.getElementById('custom-rows').appendChild(row);
+  document.getElementById('add-name').value='';document.getElementById('add-amount').value='';
+  recalc();
+});
+
+/* EVENTS */
+document.getElementById('income-input').addEventListener('input',recalc);
+document.getElementById('actual-input').addEventListener('input',recalc);
+document.getElementById('wi-amount').addEventListener('input',()=>updateWhatIf(parseFloat(document.getElementById('actual-input').value)||0));
+document.addEventListener('input',e=>{
+  if(e.target.dataset.group&&['fixed-rows','save-rows','var-rows'].includes(e.target.dataset.group)){rerenderSorted();}
+  if(e.target.dataset.group)recalc();
+});
+['sav','sh','gen'].forEach(id=>document.getElementById(id+'-input').addEventListener('input',updatePots));
+
+/* INIT */
+document.getElementById('header-date').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+renderRows('fixed-rows',fixedItems);
+renderRows('save-rows',saveItems);
+renderRows('var-rows',varItems);
+recalc();
+updatePots();
+updateBodyHero(CURRENT_KG);
+renderBodyGrid();
+updatePayday(815,5230);
+</script>
+</body>
+</html>
