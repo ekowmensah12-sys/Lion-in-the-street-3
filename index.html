@@ -110,7 +110,7 @@ input[type=number]:focus{border-color:var(--gold);}
 .wi-val.amber{color:var(--amber);}
 
 /* POTS */
-.pots-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.25rem;}
+.pots-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:1.25rem;}
 @media(max-width:600px){.pots-grid,.budget-grid{grid-template-columns:1fr;}}
 .pot{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.1rem;}
 .pot-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
@@ -293,6 +293,11 @@ select.add-select{background:var(--surface);border:1px solid var(--border2);colo
         <div class="pot-value priv-val" id="gen-display">£4,700</div>
         <div class="pot-input-wrap priv-input"><span class="pot-pfx">£</span><input type="number" id="gen-input" value="4700" min="0" step="1"></div>
         <div class="pot-note">Touch-free until 2033</div>
+      </div>
+      <div class="pot" style="border-color:var(--border2);">
+        <div class="pot-top"><span class="pot-label">Unforeseen bills</span><span class="pot-tag" style="background:#F0EEFF;color:#5B4DB5;">Reserve</span></div>
+        <div class="pot-value priv-val" id="uf-display" style="color:#5B4DB5;">£0</div>
+        <div class="pot-input-wrap priv-input"><span class="pot-pfx">£</span><input type="number" id="uf-input" value="0" min="0" step="1"></div>
       </div>
     </div>
 
@@ -618,7 +623,7 @@ function updateWhatIf(actual){
 }
 
 function updatePots(){
-  [['sav','sav-display'],['sh','sh-display'],['gen','gen-display']].forEach(([id,disp])=>{
+  [['sav','sav-display'],['sh','sh-display'],['gen','gen-display'],['uf','uf-display']].forEach(([id,disp])=>{
     document.getElementById(disp).textContent=fmt(parseFloat(document.getElementById(id+'-input').value)||0);
   });
 }
@@ -639,7 +644,7 @@ function updateChart(ft,st,vt){
 /* BODY TRACKER */
 const CURRENT_KG=109.1,GOAL_KG=107.0,START_KG=109.1;
 function kgToStone(kg){const lbs=kg*2.20462;return`${Math.floor(lbs/14)} st ${Math.round(lbs%14)} lb`;}
-const bodyLogs={};
+const bodyLogs=(()=>{try{return JSON.parse(localStorage.getItem('lionBodyLogs')||'{}')}catch(e){return{}}})();
 function updateBodyHero(kg){
   document.getElementById('body-current-st').textContent=kgToStone(kg);
   document.getElementById('body-current-kg').textContent=kg.toFixed(1)+' kg';
@@ -678,6 +683,7 @@ document.getElementById('body-log-btn').addEventListener('click',()=>{
   const now=new Date();
   const key=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
   bodyLogs[key]=kg;
+  localStorage.setItem('lionBodyLogs',JSON.stringify(bodyLogs));
   document.getElementById('body-kg-input').value='';
   updateBodyHero(kg);
   renderBodyGrid();
@@ -743,7 +749,7 @@ document.addEventListener('input',e=>{
   if(e.target.dataset.group&&['fixed-rows','save-rows','var-rows'].includes(e.target.dataset.group)){rerenderSorted();}
   if(e.target.dataset.group)recalc();
 });
-['sav','sh','gen'].forEach(id=>document.getElementById(id+'-input').addEventListener('input',updatePots));
+['sav','sh','gen','uf'].forEach(id=>document.getElementById(id+'-input').addEventListener('input',updatePots));
 
 /* INIT */
 document.getElementById('header-date').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
